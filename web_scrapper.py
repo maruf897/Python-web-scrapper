@@ -4,7 +4,7 @@ from datetime import datetime
 
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
-url = "https://stackoverflow.com/jobs"  # enter desired url
+url = "https://mofa.gov.bd/site/view/service_box_items/PRESS%20RELEASES/Press-Release"  # enter desired url
 req = requests.get(url)
 soup = BeautifulSoup(req.text, "lxml")
 soup.prettify()
@@ -33,8 +33,8 @@ if press is not None:
 table = body.find("table")
 
 if table is not None:
-    table_body = table.tbody
-    data = []
+    table_body = table.find("tbody")
+
     rows = table_body.find_all("tr")
 
     with open(filename, "a", encoding="utf-8") as file1:
@@ -68,7 +68,8 @@ for link in links:
         doc_link = link["href"]
 
         if doc_link.endswith((accepted_format)):
-            r = requests.get(doc_link)
+            r = requests.get(doc_link,allow_redirects=True)
+            print(doc_link)
             doc_name = doc_link.rsplit("/", 1)[1]
             with open(doc_name, "wb") as file2:
                 file2.write(r.content)
