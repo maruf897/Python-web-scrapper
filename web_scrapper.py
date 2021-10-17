@@ -2,10 +2,16 @@ from bs4 import BeautifulSoup
 import requests
 from datetime import datetime
 
+# I used Virtual Env to run python, to activate the venv go to venv/Scripts/Activate.ps1
+
+
 now = datetime.now()
 date_time = now.strftime("%m_%d_%Y_%H_%M_%S")
-url = "https://mofa.gov.bd/site/view/service_box_items/PRESS%20RELEASES/Press-Release"  # enter desired url
+
+url = "https://datatables.net/"  # enter desired url
+
 req = requests.get(url)
+
 soup = BeautifulSoup(req.text, "lxml")
 soup.prettify()
 # i couldnt make file with ":"and "/" present in the link, so replaced them
@@ -30,20 +36,27 @@ if press is not None:
             file1.writelines(" Link: " + li.a["href"])
             file1.write("\n")
 # for table data if present
-table = body.find("table")
+tables = body.find_all("table")
+rows = []
+if len(tables) > 0:
+    for table in tables:
+        table_body = table.find("tbody")
+        table_head = table.find_all("th")
 
-if table is not None:
-    table_body = table.find("tbody")
-
-    rows = table_body.find_all("tr")
+        if table_body is not None:
+            rows = table_body.find_all("tr")
 
     with open(filename, "a", encoding="utf-8") as file1:
         file1.write("Table Data \n")
-        for row in rows:
-            cols = row.find_all("td")
-
-            for td in cols:
-                file1.write(td.text + ",")
+        if len(table_head) > 0:
+            for th in table_head:
+                file1.write(th.text + ",")
+            file1.write("\n")
+        if len(rows) > 0:
+            for row in rows:
+                cols = row.find_all("td")
+                for td in cols:
+                    file1.write(td.text + ",")
                 file1.write("\n")
 # for mofa gov link
 footer = body.find("div", id="footer-menu")
@@ -68,7 +81,7 @@ for link in links:
         doc_link = link["href"]
 
         if doc_link.endswith((accepted_format)):
-            r = requests.get(doc_link,allow_redirects=True)
+            r = requests.get(doc_link, allow_redirects=True)
             print(doc_link)
             doc_name = doc_link.rsplit("/", 1)[1]
             with open(doc_name, "wb") as file2:
@@ -78,8 +91,7 @@ jobs = body.find_all("div", {"class": "-job"})
 
 if len(jobs) > 0:
     no_match_flag = False
-    print(no_match_flag)
-    print(jobs)
+
     for job in jobs:
 
         with open(filename, "a", encoding="utf-8") as file1:
@@ -102,12 +114,12 @@ if len(jobs) > 0:
 
             file1.write("\n")
 # for any form data, i am not sure how to get category so using place holder to indentify
-forms = body.find_all("input", {"placeholder": True, "value": True})
+forms = body.find_all("input", {"placeholder": True, "name": True})
 if forms is not None:
     with open(filename, "a", encoding="utf-8") as file1:
         file1.write("Form Data \n")
         for form in forms:
-            file1.writelines(form["placeholder"] + ":" + form["value"] + "\n")
+            file1.writelines(form["placeholder"] + ":" + form["name"] + "\n")
 # for general case
 if no_match_flag:
     with open(filename, "a", encoding="utf-8") as file1:
